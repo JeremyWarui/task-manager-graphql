@@ -66,7 +66,6 @@ const typeDefs = `
 
         editTask(
             id: ID!
-            done: Boolean!
         ): Task
     }
 `
@@ -86,7 +85,9 @@ const resolvers = {
       }
       return await Task.find(filter).populate('user')
     },
-    me: (root, args) => 'current user',
+    me: (root, args, context) => {
+      return context.currentUser
+    },
   },
   User: {
     tasks: async (user) => {
@@ -94,16 +95,29 @@ const resolvers = {
     },
   },
   Mutation: {
-    addTask: async (root, args) => {
+    addTask: async (root, args, context) => {
+      const { currentUser } = context
+
+      if (!currentUser) {
+        throw new GraphQLError('not authenticated', {
+          extensions: {
+            code: 'BAD_USER_INPUT',
+          },
+        })
+      }
+
       try {
         const task = new Task({
           title: args.title,
           description: args.description,
           done: args.done || false,
+          user: currentUser._id,
         })
-
         await task.save()
-
+        await User.findByIdAndUpdate(currentUser._id, {
+          $push: { tasks: task._id },
+        })
+        await task.populate('user')
         return task
       } catch (error) {
         let message = 'Saving new task failed'
@@ -114,20 +128,49 @@ const resolvers = {
         throw new GraphQLError(message, {
           extensions: {
             code: 'BAD_USER_INPUT',
+            error,
           },
         })
       }
     },
-    editTask: async (root, args) => {
+    editTask: async (root, args, context) => {
+      const { currentUser } = context
+
+      if (!currentUser) {
+        throw new GraphQLError('not authenticated', {
+          extensions: {
+            code: 'BAD_USER_INPUT',
+          },
+        })
+      }
+
       try {
-        const task = await Task.findByIdAndUpdate(
-          { _id: args.id },
-          { done: args.done },
+        const taskToUpdate = await Task.findById(args.id)
+        if (!taskToUpdate) {
+          throw new GraphQLError('task not found', {
+            extensions: {
+              code: 'BAD_USER_INPUT',
+            },
+          })
+        }
+
+        if (taskToUpdate.user.toString() !== currentUser._id) {
+          throw new GraphQLError('not authorized', {
+            extensions: {
+              code: 'BAD_USER_INPUT',
+            },
+          })
+        }
+
+        const updatedTask = await Task.findByIdAndUpdate(
+          args.id,
+          { done: !taskToUpdate.done },
           { new: true }
-        )
-        return task
+        ).populate('user')
+
+        return updatedTask
       } catch (error) {
-        throw new GraphQLError('task not found', {
+        throw new GraphQLError('failed to update the task', {
           extensions: {
             code: 'BAD_USER_INPUT',
             error,
@@ -153,7 +196,7 @@ const resolvers = {
       }
     },
     login: async (root, args) => {
-      const user = await User.find({ username: args.username })
+      const user = await User.findOne({ username: args.username })
 
       if (!user && args.password !== 'secret') {
         throw new GraphQLError('wrong credentials', {
@@ -177,4 +220,12 @@ const server = new ApolloServer({
 
 startStandaloneServer(server, {
   listen: { port: 4000 },
+  context: async ({ req, res }) => {
+    const auth = req ? req.headers.authorization : null
+    if (auth && auth.startsWith('Bearer ')) {
+      const decodedToken = jwt.verify(auth.substring(7), process.env.JWT_SECRET)
+      const currentUser = await User.findById(decodedToken.id)
+      return { currentUser }
+    }
+  },
 }).then(({ url }) => console.log(`Server ready at ${url}`))
