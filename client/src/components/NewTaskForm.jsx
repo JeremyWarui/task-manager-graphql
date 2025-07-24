@@ -1,22 +1,31 @@
 import { useMutation } from "@apollo/client";
 import { useState } from "react";
+import { ALL_TASKS, CREATE_TASK } from "./queries";
 
 const NewTaskForm = () => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [status, setStatus] = useState(false);
+
+  const [createTask] = useMutation(CREATE_TASK, {
+    refetchQueries: [{ query: ALL_TASKS }],
+  });
 
   const submit = (event) => {
     event.preventDefault();
+
+    createTask({ variables: { title, description } });
+
+    setTitle("");
+    setDescription("");
   };
   return (
     <div className="container">
       <div>
-        <h2>Add New Task</h2>
+        <h3>Add New Task</h3>
       </div>
       <form onSubmit={submit}>
         <div>
-          <lable>Title</lable>
+          <label>Title</label>
           <div>
             <input
               value={title}
@@ -25,7 +34,7 @@ const NewTaskForm = () => {
           </div>
         </div>
         <div>
-          <lable>Description</lable>
+          <label>Description</label>
           <div>
             <input
               value={description}
@@ -34,16 +43,15 @@ const NewTaskForm = () => {
           </div>
         </div>
         <div>
-          <lable>Status</lable>
-          <div>
-            <input
-              value={status}
-              onChange={({ target }) => setStatus(target.value)}
-            />
-          </div>
-        </div>
-        <div>
-          <button type="submit">post</button>
+          <button
+            style={{
+              marginTop: "5px",
+              padding: "5px 15px",
+            }}
+            type="submit"
+          >
+            post
+          </button>
         </div>
       </form>
     </div>

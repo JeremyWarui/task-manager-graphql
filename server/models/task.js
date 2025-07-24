@@ -12,7 +12,7 @@ const taskSchema = new mongoose.Schema({
   },
   done: {
     type: Boolean,
-    required: true,
+    default: false
   },
   user: {
     type: mongoose.Schema.Types.ObjectId,

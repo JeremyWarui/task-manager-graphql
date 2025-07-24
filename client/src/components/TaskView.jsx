@@ -1,17 +1,32 @@
-import { useQuery } from "@apollo/client";
-import { ALL_TASKS } from "./queries";
+import { useMutation, useQuery } from "@apollo/client";
+import { ALL_TASKS, EDIT_TASK } from "./queries";
 
 import Button from "react-bootstrap/Button";
 import Table from "react-bootstrap/Table";
+import { useState } from "react";
 
 const TasksView = () => {
-  const results = useQuery(ALL_TASKS);
+  const [status, setStatus] = useState("");
+  const results = useQuery(ALL_TASKS, {
+    variables: { status: status },
+  });
+  const [editTask] = useMutation(EDIT_TASK);
 
   if (results.loading) {
     return <div>...loading</div>;
   }
 
-  const tasks = results.data.allTasks;
+  const handleCheck = (taskId) => {
+    editTask({
+      variables: { id: taskId },
+      update: (cache) => {
+        cache.evict({ fieldName: "allTasks" });
+        cache.gc;
+      },
+    });
+  };
+
+  const tasks = results.data?.allTasks || [];
   return (
     <div className="container">
       <Table striped bordered hover>
@@ -30,12 +45,45 @@ const TasksView = () => {
               <td>{task.description}</td>
               <td>{task.done ? "Done" : "Pending"}</td>
               <td>
-                <Button variant="primary">Check</Button>
+                <input
+                  type="checkbox"
+                  checked={task.done}
+                  onChange={() => handleCheck(task.id)}
+                />
               </td>
             </tr>
           ))}
         </tbody>
       </Table>
+      <div
+        style={{
+          marginTop: "10px",
+          width: "300px",
+        }}
+      >
+        <button
+          style={{
+            border: "none",
+            marginRight: "5px",
+            padding: "5px 15px",
+          }}
+          onClick={() => setStatus("")}
+        >
+          All Tasks
+        </button>
+        <button
+          style={{ border: "none", marginRight: "5px", padding: "5px 15px" }}
+          onClick={() => setStatus("pending")}
+        >
+          Pending
+        </button>
+        <button
+          style={{ border: "none", padding: "5px 15px" }}
+          onClick={() => setStatus("done")}
+        >
+          Done
+        </button>
+      </div>
     </div>
   );
 };
