@@ -7,7 +7,9 @@ const NewTaskForm = () => {
   const [description, setDescription] = useState("");
 
   const [createTask] = useMutation(CREATE_TASK, {
-    refetchQueries: [{ query: ALL_TASKS }],
+    update: (cache) => {
+      cache.evict({ fieldName: "allTasks" }), cache.gc();
+    },
   });
 
   const submit = (event) => {

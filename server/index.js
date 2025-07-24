@@ -97,24 +97,24 @@ const resolvers = {
     addTask: async (root, args, context) => {
       const { currentUser } = context
 
-    //   if (!currentUser) {
-    //     throw new GraphQLError('not authenticated', {
-    //       extensions: {
-    //         code: 'BAD_USER_INPUT',
-    //       },
-    //     })
-    //   }
+      if (!currentUser) {
+        throw new GraphQLError('not authenticated', {
+          extensions: {
+            code: 'BAD_USER_INPUT',
+          },
+        })
+      }
 
       try {
         const task = new Task({
           title: args.title,
           description: args.description,
-        //   user: currentUser._id,
+          user: currentUser._id,
         })
         await task.save()
-        // await User.findByIdAndUpdate(currentUser._id, {
-        //   $push: { tasks: task._id },
-        // })
+        await User.findByIdAndUpdate(currentUser._id, {
+          $push: { tasks: task._id },
+        })
         await task.populate('user')
         return task
       } catch (error) {
@@ -132,15 +132,15 @@ const resolvers = {
       }
     },
     editTask: async (root, args, context) => {
-    //   const { currentUser } = context
+      const { currentUser } = context
 
-    //   if (!currentUser) {
-    //     throw new GraphQLError('not authenticated', {
-    //       extensions: {
-    //         code: 'BAD_USER_INPUT',
-    //       },
-    //     })
-    //   }
+      if (!currentUser) {
+        throw new GraphQLError('not authenticated', {
+          extensions: {
+            code: 'BAD_USER_INPUT',
+          },
+        })
+      }
 
       try {
         const taskToUpdate = await Task.findById(args.id)
@@ -152,13 +152,13 @@ const resolvers = {
           })
         }
 
-        // if (taskToUpdate.user.toString() !== currentUser._id) {
-        //   throw new GraphQLError('not authorized', {
-        //     extensions: {
-        //       code: 'BAD_USER_INPUT',
-        //     },
-        //   })
-        // }
+        if (taskToUpdate.user.toString() !== currentUser._id) {
+          throw new GraphQLError('not authorized', {
+            extensions: {
+              code: 'BAD_USER_INPUT',
+            },
+          })
+        }
 
         const updatedTask = await Task.findByIdAndUpdate(
           args.id,

@@ -32,3 +32,19 @@ export const EDIT_TASK = gql`
     }
   }
 `;
+
+export const LOGIN_USER = gql`
+  mutation login($username: String!, $password: String!) {
+    login(username: $username, password: $password) {
+      value
+    }
+  }
+`;
+
+
+// export const CURRENT_USER = gql`
+//   query me {
+
+//   }
+
+// `
