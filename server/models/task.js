@@ -10,7 +10,10 @@ const taskSchema = new mongoose.Schema({
     type: String,
     minlength: 5,
   },
-  done: Boolean,
+  done: {
+    type: Boolean,
+    required: true,
+  },
   user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',

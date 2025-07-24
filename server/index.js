@@ -1,38 +1,22 @@
 const { ApolloServer } = require('@apollo/server')
 const { startStandaloneServer } = require('@apollo/server/standalone')
+const mongoose = require('mongoose')
+mongoose.set('strictQuery', false)
+const User = require('./models/user')
+const Task = require('./models/task')
 
-const tasks = [
-  {
-    id: '3d594650-3436-11e9-bc57-8b80ba54c431',
-    title: 'Finish GraphQL tutorial',
-    description: 'Complete the FullstackOpen GraphQL module exercises',
-    done: false,
-  },
-  {
-    id: '5b1fc3d0-993c-4e76-9015-3a58fe7a19e2',
-    title: 'Buy groceries',
-    description: 'Milk, bread, eggs, and cheese',
-    done: true,
-  },
-  {
-    id: '29be2b74-3d90-4c1d-bbcc-bc64c00c7e9e',
-    title: 'Plan weekend trip',
-    description: 'Decide on a destination and book hotel',
-    done: false,
-  },
-  {
-    id: '9f8e5a92-6fdd-4c19-9273-21a7f509bcda',
-    title: 'Clean workspace',
-    description: 'Organize desk and delete unused files',
-    done: true,
-  },
-  {
-    id: 'c3ad1623-94cd-4bde-9239-ecebc2b0d8db',
-    title: 'Read GraphQL docs',
-    description: 'Focus on Apollo Server and client sections',
-    done: false,
-  },
-]
+require('dotenv').config()
+
+const MONGODB_URI = process.env.MONGODB_URI
+
+console.log('connecting to MONGODB')
+
+mongoose
+  .connect(MONGODB_URI)
+  .then(() => console.log('connected to MONGODB'))
+  .catch((error) => {
+    console.log('error connecting to MONGODB', error.message)
+  })
 
 const typeDefs = `
 
@@ -82,11 +66,16 @@ const typeDefs = `
 const resolvers = {
   Query: {
     dummy: () => 'Hello World',
-    taskCount: () => tasks.length,
-    allTasks: (root, args) => {
-      return tasks
+    taskCount: async () => await Task.countDocuments(),
+    allTasks: async (root, args) => {
+      return await Task.find({}).populate('user')
     },
     me: (root, args) => 'current user',
+  },
+  User: {
+    tasks: async (user) => {
+      return await Task.find({ user: user.id })
+    },
   },
 }
 
