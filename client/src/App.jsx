@@ -32,7 +32,7 @@ const App = () => {
   const logout = () => {
     setToken(null);
     localStorage.clear();
-    client.resetStore();
+    client.clearStore();
   };
 
   if (results.loading) {

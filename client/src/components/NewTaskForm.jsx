@@ -1,14 +1,25 @@
 import { useMutation } from "@apollo/client";
 import { useState } from "react";
-import { ALL_TASKS, CREATE_TASK } from "./queries";
+import { ALL_TASKS, CREATE_TASK, CURRENT_USER } from "./queries";
 
 const NewTaskForm = () => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
 
   const [createTask] = useMutation(CREATE_TASK, {
-    update: (cache) => {
-      cache.evict({ fieldName: "allTasks" }), cache.gc();
+    update: (cache, { data: { addTask } }) => {
+      // Directly update the cache for ALL_TASKS or CURRENT_USER
+      // Example for CURRENT_USER:
+      const existing = cache.readQuery({ query: CURRENT_USER });
+      cache.writeQuery({
+        query: CURRENT_USER,
+        data: {
+          me: {
+            ...existing.me,
+            tasks: [...existing.me.tasks, addTask],
+          },
+        },
+      });
     },
   });
 

@@ -165,7 +165,7 @@ const resolvers = {
           })
         }
 
-        if (taskToUpdate.user.toString() !== currentUser._id) {
+        if (taskToUpdate.user.toString() !== currentUser._id.toString()) {
           throw new GraphQLError('not authorized', {
             extensions: {
               code: 'BAD_USER_INPUT',

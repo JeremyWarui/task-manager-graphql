@@ -6,30 +6,42 @@ import { useState } from "react";
 
 const TasksView = () => {
   const [status, setStatus] = useState("");
-  const results = useQuery(ALL_TASKS, {
-    variables: { status: status },
-  });
-  // const results = useQuery(CURRENT_USER, {
-  //   variables: { status: status },
-  // });
+  const results = useQuery(CURRENT_USER);
   const [editTask] = useMutation(EDIT_TASK);
 
   if (results.loading) {
     return <div>...loading</div>;
   }
 
+  const tasks = results.data?.me?.tasks || [];
+
+  // Optionally filter by status
+  const filteredTasks = status
+    ? tasks.filter((task) =>
+        status === "done" ? task.done : !task.done
+      )
+    : tasks;
+
   const handleCheck = (taskId) => {
     editTask({
       variables: { id: taskId },
-      update: (cache) => {
-        cache.evict({ fieldName: "allTasks" });
-        cache.gc;
+      update: (cache, { data: { editTask } }) => {
+        const existing = cache.readQuery({ query: CURRENT_USER });
+        cache.writeQuery({
+          query: CURRENT_USER,
+          data: {
+            me: {
+              ...existing.me,
+              tasks: existing.me.tasks.map((task) =>
+                task.id === editTask.id ? editTask : task
+              ),
+            },
+          },
+        });
       },
     });
   };
 
-  const tasks = results.data?.allTasks || [];
-  // const userTasks = results.data?.me?.tasks || [];
   return (
     <div className="container">
       <Table striped bordered hover>
@@ -42,7 +54,7 @@ const TasksView = () => {
           </tr>
         </thead>
         <tbody>
-          {tasks.map((task) => (
+          {filteredTasks.map((task) => (
             <tr key={task.id}>
               <td>{task.title}</td>
               <td>{task.description}</td>
