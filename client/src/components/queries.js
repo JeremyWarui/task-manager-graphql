@@ -36,6 +36,15 @@ export const EDIT_TASK = gql`
   ${TASK_DETAILS}
 `;
 
+export const CREATE_USER = gql`
+  mutation createUser($username: String!, $password: String!) {
+    createUser(username: $username, password: $password) {
+      username
+      id
+    }
+  }
+`;
+
 export const LOGIN_USER = gql`
   mutation login($username: String!, $password: String!) {
     login(username: $username, password: $password) {

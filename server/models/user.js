@@ -7,7 +7,7 @@ const userSchema = new mongoose.Schema({
     unique: true,
     minlength: 3,
   },
-  password: { String, required: true, minlength: 5 },
+  password: { type: String, required: true, minlength: 5 },
   tasks: [
     {
       type: mongoose.Schema.Types.ObjectId,

@@ -2,6 +2,7 @@ const mongoose = require('mongoose')
 mongoose.set('strictQuery', false)
 const User = require('./models/user')
 const Task = require('./models/task')
+const bcrypt = require('bcrypt') // Add this line
 
 require('dotenv').config()
 
@@ -13,14 +14,17 @@ const users = [
   {
     id: '1a2b3c4d-aaaa-bbbb-cccc-111122223333',
     username: 'alice',
+    password: 'alicepass', // Add plain password
   },
   {
     id: '2b3c4d5e-bbbb-cccc-dddd-222233334444',
     username: 'bob',
+    password: 'bobpass',
   },
   {
     id: '3c4d5e6f-cccc-dddd-eeee-333344445555',
     username: 'charlie',
+    password: 'charliepass',
   },
 ]
 
@@ -69,11 +73,13 @@ const populateDatabase = async () => {
     await Task.deleteMany({})
     console.log('Cleared existing data')
 
-    // Create users first
+    // Create users first, with hashed passwords
     const createdUsers = []
     for (const userData of users) {
+      const passwordHash = await bcrypt.hash(userData.password, 10)
       const user = new User({
         username: userData.username,
+        password: passwordHash, // Store hashed password
         tasks: [], // Will be populated after creating tasks
       })
       const savedUser = await user.save()
