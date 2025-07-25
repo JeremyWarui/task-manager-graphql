@@ -60,6 +60,9 @@ export const CURRENT_USER = gql`
       id
       tasks {
         id
+        title
+        description
+        done
       }
     }
   }

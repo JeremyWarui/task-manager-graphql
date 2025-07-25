@@ -79,8 +79,13 @@ const resolvers = {
 
     allUsers: async () => await User.find({}),
 
-    allTasks: async (root, args) => {
-      let filter = {}
+    allTasks: async (root, args, { currentUser }) => {
+      if (!currentUser) {
+        throw new GraphQLError('not authenticated', {
+          extensions: { code: 'BAD_USER_INPUT' },
+        })
+      }
+      let filter = { user: currentUser._id }
       if (args.status === 'done') {
         filter.done = true
       }

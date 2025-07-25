@@ -1,5 +1,5 @@
 import { useApolloClient, useQuery } from "@apollo/client";
-import { ALL_TASKS } from "./components/queries";
+import { ALL_TASKS, CURRENT_USER } from "./components/queries";
 import TasksView from "./components/TaskView";
 import NewTaskForm from "./components/NewTaskForm";
 
@@ -16,6 +16,9 @@ const App = () => {
   const [error, setError] = useState("");
   const client = useApolloClient();
   const results = useQuery(ALL_TASKS, {
+    skip: !token,
+  });
+  const { data: userData } = useQuery(CURRENT_USER, {
     skip: !token,
   });
 
@@ -78,6 +81,9 @@ const App = () => {
     <div>
       <h1 className="text-center">Personal Task Manager</h1>
       <hr />
+      <h5 style={{ marginLeft: "150px", marginBottom: "20px" }}>
+        Welcome <b>{userData?.me?.username || ""}</b>
+      </h5>
 
       <Container>
         <Row className="justify-content-md-center">

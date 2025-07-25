@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from "@apollo/client";
-import { ALL_TASKS, EDIT_TASK } from "./queries";
+import { ALL_TASKS, CURRENT_USER, EDIT_TASK } from "./queries";
 
 import Table from "react-bootstrap/Table";
 import { useState } from "react";
@@ -9,6 +9,9 @@ const TasksView = () => {
   const results = useQuery(ALL_TASKS, {
     variables: { status: status },
   });
+  // const results = useQuery(CURRENT_USER, {
+  //   variables: { status: status },
+  // });
   const [editTask] = useMutation(EDIT_TASK);
 
   if (results.loading) {
@@ -26,6 +29,7 @@ const TasksView = () => {
   };
 
   const tasks = results.data?.allTasks || [];
+  // const userTasks = results.data?.me?.tasks || [];
   return (
     <div className="container">
       <Table striped bordered hover>
