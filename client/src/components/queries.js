@@ -21,23 +21,19 @@ export const ALL_TASKS = gql`
 export const CREATE_TASK = gql`
   mutation createTask($title: String!, $description: String!) {
     addTask(title: $title, description: $description) {
-      title
-      id
-      description
-      done
+      ...TaskDetails
     }
   }
+  ${TASK_DETAILS}
 `;
 
 export const EDIT_TASK = gql`
   mutation editTask($id: ID!) {
     editTask(id: $id) {
-      id
-      title
-      description
-      done
+      ...TaskDetails
     }
   }
+  ${TASK_DETAILS}
 `;
 
 export const LOGIN_USER = gql`
@@ -48,9 +44,14 @@ export const LOGIN_USER = gql`
   }
 `;
 
-// export const CURRENT_USER = gql`
-//   query me {
-
-//   }
-
-// `
+export const CURRENT_USER = gql`
+  query me {
+    me {
+      username
+      id
+      tasks {
+        id
+      }
+    }
+  }
+`;
