@@ -1,14 +1,21 @@
 import { gql } from "@apollo/client";
 
+const TASK_DETAILS = gql`
+  fragment TaskDetails on Task {
+    title
+    description
+    done
+    id
+  }
+`;
+
 export const ALL_TASKS = gql`
   query allTasks($status: String) {
     allTasks(status: $status) {
-      title
-      description
-      done
-      id
+      ...TaskDetails
     }
   }
+  ${TASK_DETAILS}
 `;
 
 export const CREATE_TASK = gql`
@@ -40,7 +47,6 @@ export const LOGIN_USER = gql`
     }
   }
 `;
-
 
 // export const CURRENT_USER = gql`
 //   query me {
