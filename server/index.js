@@ -6,6 +6,7 @@ const User = require('./models/user')
 const Task = require('./models/task')
 const { GraphQLError } = require('graphql')
 const jwt = require('jsonwebtoken')
+const bcrypt = require('bcrypt')
 
 require('dotenv').config()
 
@@ -51,6 +52,7 @@ const typeDefs = `
     type Mutation {
         createUser(
             username: String!
+            password: String!
         ): User
 
         login(
@@ -72,8 +74,11 @@ const typeDefs = `
 const resolvers = {
   Query: {
     dummy: () => 'Hello World',
+
     taskCount: async () => await Task.countDocuments(),
+
     allUsers: async () => await User.find({}),
+
     allTasks: async (root, args) => {
       let filter = {}
       if (args.status === 'done') {
@@ -84,6 +89,7 @@ const resolvers = {
       }
       return await Task.find(filter).populate('user')
     },
+
     me: (root, args, context) => {
       return context.currentUser
     },
@@ -93,6 +99,7 @@ const resolvers = {
       return await Task.find({ user: user.id })
     },
   },
+
   Mutation: {
     addTask: async (root, args, context) => {
       const { currentUser } = context
@@ -131,6 +138,7 @@ const resolvers = {
         })
       }
     },
+
     editTask: async (root, args, context) => {
       const { currentUser } = context
 
@@ -178,7 +186,11 @@ const resolvers = {
     },
 
     createUser: async (root, args) => {
-      const user = new User({ username: args.username })
+      //bcrypt password then store the password
+      const passwordHash = await bcrypt.hash(args.password, 10)
+
+      const user = new User({ username: args.username, password: passwordHash })
+
       try {
         return await user.save()
       } catch (error) {
@@ -193,10 +205,15 @@ const resolvers = {
         })
       }
     },
+
     login: async (root, args) => {
       const user = await User.findOne({ username: args.username })
 
-      if (!user && args.password !== 'secret') {
+      const userPass = user
+        ? await bcrypt.compare(args.password, user.password)
+        : false
+
+      if (!user || !userPass) {
         throw new GraphQLError('wrong credentials', {
           extensions: {
             code: 'BAD_USER_INPUT',
